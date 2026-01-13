@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>쇼핑 리스트</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 500px;
+            padding: 30px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        #itemInput {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        #itemInput:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        #addBtn {
+            padding: 12px 25px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        #addBtn:hover {
+            background: #5568d3;
+        }
+
+        #addBtn:active {
+            transform: scale(0.98);
+        }
+
+        .shopping-list {
+            list-style: none;
+        }
+
+        .shopping-item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .shopping-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .shopping-item.checked {
+            background: #d4edda;
+            opacity: 0.7;
+        }
+
+        .shopping-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .shopping-item span {
+            flex: 1;
+            font-size: 16px;
+            color: #333;
+            transition: all 0.3s;
+        }
+
+        .shopping-item.checked span {
+            text-decoration: line-through;
+            color: #6c757d;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+        }
+
+        .empty-message {
+            text-align: center;
+            color: #6c757d;
+            padding: 40px 20px;
+            font-size: 16px;
+        }
+
+        .stats {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛒 쇼핑 리스트</h1>
+
+        <div class="input-container">
+            <input
+                type="text"
+                id="itemInput"
+                placeholder="구매할 물건을 입력하세요..."
+                autocomplete="off"
+            >
+            <button id="addBtn">추가</button>
+        </div>
+
+        <ul id="shoppingList" class="shopping-list"></ul>
+
+        <div class="stats">
+            <span id="statsText">리스트가 비어있습니다</span>
+        </div>
+    </div>
+
+    <script>
+        const itemInput = document.getElementById('itemInput');
+        const addBtn = document.getElementById('addBtn');
+        const shoppingList = document.getElementById('shoppingList');
+        const statsText = document.getElementById('statsText');
+
+        let items = loadItems();
+
+        function loadItems() {
+            try {
+                const stored = localStorage.getItem('shoppingItems');
+                return stored ? JSON.parse(stored) : [];
+            } catch (error) {
+                console.error('localStorage 읽기 오류:', error);
+                return [];
+            }
+        }
+
+        function saveItems() {
+            try {
+                localStorage.setItem('shoppingItems', JSON.stringify(items));
+            } catch (error) {
+                console.error('localStorage 저장 오류:', error);
+                if (error.name === 'QuotaExceededError') {
+                    alert('저장 공간이 부족합니다. 일부 항목을 삭제해주세요.');
+                }
+            }
+        }
+
+        function updateStats() {
+            const total = items.length;
+            const checked = items.filter(item => item.checked).length;
+            const unchecked = total - checked;
+
+            if (total === 0) {
+                statsText.textContent = '리스트가 비어있습니다';
+            } else {
+                statsText.textContent = `전체: ${total}개 | 완료: ${checked}개 | 남은 것: ${unchecked}개`;
+            }
+        }
+
+        function sanitizeText(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function createShoppingItem(item, index) {
+            const li = document.createElement('li');
+            li.className = `shopping-item ${item.checked ? 'checked' : ''}`;
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = item.checked;
+            checkbox.addEventListener('change', () => toggleItem(index));
+
+            const span = document.createElement('span');
+            span.textContent = item.text;
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.textContent = '삭제';
+            deleteBtn.addEventListener('click', () => deleteItem(index));
+
+            li.appendChild(checkbox);
+            li.appendChild(span);
+            li.appendChild(deleteBtn);
+
+            return li;
+        }
+
+        function renderItems() {
+            shoppingList.innerHTML = '';
+
+            if (items.length === 0) {
+                const emptyMessage = document.createElement('div');
+                emptyMessage.className = 'empty-message';
+                emptyMessage.textContent = '구매할 물건을 추가해보세요!';
+                shoppingList.appendChild(emptyMessage);
+            } else {
+                items.forEach((item, index) => {
+                    const li = createShoppingItem(item, index);
+                    shoppingList.appendChild(li);
+                });
+            }
+
+            updateStats();
+        }
+
+        function addItem() {
+            const text = itemInput.value.trim();
+
+            if (text === '') {
+                alert('물건 이름을 입력해주세요!');
+                return;
+            }
+
+            items.push({
+                text: text,
+                checked: false
+            });
+
+            itemInput.value = '';
+            itemInput.focus();
+
+            saveItems();
+            renderItems();
+        }
+
+        function deleteItem(index) {
+            items.splice(index, 1);
+            saveItems();
+            renderItems();
+        }
+
+        function toggleItem(index) {
+            items[index].checked = !items[index].checked;
+            saveItems();
+            renderItems();
+        }
+
+        addBtn.addEventListener('click', addItem);
+
+        itemInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addItem();
+            }
+        });
+
+        renderItems();
+    </script>
+</body>
+</html>
