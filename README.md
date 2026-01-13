@@ -10,8 +10,8 @@
 
 ## 데모
 
-GitHub Pages: https://jakelee3322.github.io/shopping-listapp/shopping-list.html
+GitHub Pages: https://jakelee3322.github.io/shopping-listapp/
 
 ## 사용 방법
 
-`shopping-list.html` 파일을 브라우저에서 열어서 사용하세요.
+`index.html` 또는 `shopping-list.html` 파일을 브라우저에서 열어서 사용하세요.
